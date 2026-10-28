@@ -1,44 +1,97 @@
-# Crop Yield Explorer
+# 🌾 Crop Yield Explorer
 
-## Run it
+An interactive Streamlit dashboard that analyses global crop yield using 15 visualizations, a predictive model, and auto-generated insights.
+
+**Author:** Amina Munna · **Course:** Predictive Analytics and Data Visualization · **Assessment:** Data Visualization – Dashboard, Report and Presentation
+**Live dashboard:** [paste Streamlit link here, if deployed]
+
+---
+
+## 1. Dataset
+- **Source:** [Crop Yield Prediction Dataset (Kaggle, patelris)](https://www.kaggle.com/datasets/patelris/crop-yield-prediction-dataset)
+- **Original data:** FAO (fao.org) and World Bank (data.worldbank.org)
+- **File used:** `yield_df.csv`, a merge of `yield.csv`, `rainfall.csv`, `temp.csv` and `pesticides.csv`
+- **Coverage:** 1990-2013 · 101 countries · 10 crops (cassava, maize, plantains and others, potatoes, rice, sorghum, soybeans, sweet potatoes, wheat, yams)
+- **Variables:** Area, Item (crop), Year, yield (hg/ha), average rainfall (mm/year), pesticides (tonnes), average temperature (°C)
+
+## 2. Data Preparation
+| Step | Result |
+|---|---|
+| Raw rows | 28,242 |
+| Missing values removed | 0 |
+| Duplicate rows removed | 2,310 |
+| **Clean rows** | **25,932** |
+
+Other steps: dropped the index column, renamed columns, converted yield from hg/ha to **t/ha**, and created **decade** and **quartile bands** (temperature, rainfall, pesticides).
+
+## 3. Dashboard Features
+- Sidebar filters: crop, year range, country
+- KPI cards: records, countries, mean and median yield
+- 7 tabs: Overview · Relationships · Geography · Categorical · Prediction model · Insights · Data prep
+- What-if yield predictor
+- Download button for filtered data
+
+### The 15 visualizations
+| # | Chart | Tab |
+|---|-------|-----|
+| 1 | Histogram (log scale) | Overview |
+| 2 | Box plot by crop | Overview |
+| 3 | Treemap (top countries per crop) | Overview |
+| 4 | Scatter: temperature vs yield | Relationships |
+| 5 | Scatter: rainfall vs yield | Relationships |
+| 6 | Scatter: pesticides vs yield | Relationships |
+| 7 | Correlogram | Relationships |
+| 8 | Line chart: yield over time | Relationships |
+| 9 | Scatter-plot matrix | Relationships |
+| 10 | Choropleth map | Geography |
+| 11 | Bubble chart | Geography |
+| 12 | Mosaic plot (temperature band × crop) | Categorical |
+| 13 | Heatmap (crop × decade) | Categorical |
+| 14 | Violin plot by temperature band | Categorical |
+| 15 | Sunburst (crop × rainfall band) | Categorical |
+
+## 4. Model
+80/20 train-test split, with one-hot encoding for crop and country and scaling for numeric features.
+
+| Model | R² | MAE (t/ha) |
+|---|---|---|
+| Linear Regression (baseline) | 0.749 | 2.99 |
+| Gradient Boosting | **0.966** | **0.85** |
+
+Most important features: **crop > country > pesticides, rainfall, temperature > year**.
+
+> **Note:** the random split places neighbouring years of the same country in both train and test sets, so the scores are probably optimistic.
+
+## 5. Key Findings
+1. **Crop type matters most.** Potatoes average 19.9 t/ha vs 1.7 t/ha for soybeans, an 11.7× gap.
+2. **Large country gaps.** United Kingdom ≈ 24.1 t/ha vs Botswana ≈ 0.7 t/ha.
+3. **Heat risk.** Nine of ten crops show lower yield in hotter regions (strongest: maize −0.55, yams −0.50). Cassava is the exception (+0.35).
+4. **Pooled correlations hide this.** Across all crops, yield vs temperature is only −0.11, so crops must be analysed separately.
+5. **Pesticides:** modest positive link (soybeans 0.35, potatoes 0.21), near zero for wheat, plantains and yams.
+6. **Progress over time:** mean yield rose 35.4% (1990-2013), but plantains were flat (10.6 → 10.7 t/ha).
+
+## 6. Run Locally
 ```bash
-pip install streamlit pandas numpy plotly matplotlib scikit-learn statsmodels
-# download yield_df.csv from Kaggle (patelris/crop-yield-prediction-dataset) into this folder
+git clone [your-repo-url]
+cd [repo-folder]
+pip install -r requirements.txt
 streamlit run app.py
 ```
+Keep `yield_df.csv` in the same folder as `app.py`. If it is missing, the app asks you to upload it.
 
-## Visualization checklist (15 in the dashboard)
-| # | Chart | Tab | Question it answers |
-|---|-------|-----|---------------------|
-| 1 | Histogram (log) | Overview | How skewed is yield? |
-| 2 | Box plot by crop | Overview | Which crops differ most? |
-| 3 | Treemap | Overview | Which countries lead each crop? |
-| 4-6 | Scatter plots (temp, rain, pesticides) | Relationships | Do inputs/climate relate to yield? |
-| 7 | Correlogram | Relationships | Which variables move together? |
-| 8 | Line chart | Relationships | Is yield improving over time? |
-| 9 | Scatter-plot matrix | Relationships | Pairwise structure at a glance |
-| 10 | Choropleth | Geography | Where are yields high/low? |
-| 11 | Bubble chart | Geography | Do high-input countries get higher yield? |
-| 12 | Mosaic plot | Categorical | Which crops sit in which temperature bands? |
-| 13 | Heatmap crop × decade | Categorical | Which crops improved most? |
-| 14 | Violin by temp band | Categorical | Does hot climate shift the yield distribution? |
-| 15 | Sunburst | Categorical | Crop × rainfall interaction |
+## 7. Limitations
+- Country-level averages hide local variation.
+- No soil, irrigation, fertilizer or planted-area data.
+- Correlation does not imply causation.
+- A few country names may not appear on the choropleth map.
 
-## Report outline (fill in with numbers from your dashboard)
-1. **Introduction**: food security context; objective; dataset source (FAO, World Bank), 10 crops, 1990-2013.
-2. **Data preparation**: use the "Data prep" tab log (rows, duplicates, missing); unit conversion hg/ha → t/ha; engineered bands and decades; note that climate/pesticide values are per country-year and repeat across crops.
-3. **Visualization & interpretation**: for each chart, 2-3 sentences: *what it shows → what you see → why it matters*. Use the "Insights" tab numbers.
-4. **Model development**: baseline linear regression vs gradient boosting; R², MAE; feature importance; limitation of the random split (leakage across years within a country) and what a country- or time-based split would change.
-5. **Actionable insights** (see prompts below).
-6. **Limitations & future work**: no soil, irrigation, fertilizer, or area data; country-level averages hide local variation; correlation ≠ causation.
-7. **Conclusion** and references.
+## 8. Tech Stack
+Python · Pandas · NumPy · Plotly · Scikit-learn · Streamlit
 
-## Prompts for actionable insights (confirm each against your own charts before writing it)
-- *Crop selection:* which crops give the most tonnes/ha in hot vs cool and dry vs wet bands? (Mosaic, violin, sunburst)
-- *Input efficiency:* does extra pesticide use keep paying off, or flatten out? Check the log-scale scatter and the per-crop correlation table.
-- *Climate risk:* which crops show strongest negative association with high temperature? (per-crop table in Insights)
-- *Closing yield gaps:* countries well below the crop's median yet in a similar climate band are the targets for knowledge transfer. (Treemap, choropleth)
-- *Trend:* which crops/countries stagnated over the decades? (Line chart, decade heatmap)
-
-## Presentation outline (8-10 slides)
-1. Title & question · 2. Dataset & cleaning · 3. Overview charts (1-3) · 4. Climate & input relationships (4-9) · 5. Geography (10-11) · 6. Categorical views (12-15) · 7. Model & performance · 8. Key insights · 9. Recommendations · 10. Limitations & next steps
+## 9. Files
+```
+├── app.py             # Streamlit dashboard
+├── yield_df.csv       # Dataset
+├── requirements.txt   # Dependencies
+└── README.md
+```
